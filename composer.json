@@ -1,0 +1,32 @@
+{
+    "name": "hi/helpers",
+    "description": "Hi 框架 Helper 组件",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "热心网友",
+            "email": "anoxia@engineer.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "phpstan/phpstan": "^0.12.68"
+    },
+    "autoload": {
+        "psr-4": {
+            "Hi\\Helpers\\": "src/"
+        },
+        "files": [
+            "functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Hi\\Helpers\\Tests\\": "tests/"
+        }
+    }
+}
