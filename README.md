@@ -1,2 +1,1 @@
-# helpers
-Hi 框架 Helper 组件
+# Hi 框架 Helper 组件
