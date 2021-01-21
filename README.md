@@ -1,6 +1,6 @@
 # Hi 框架 Helper 组件
 
-为 Hi 框架提供基础 Exception 与 输入(Input) 参数过滤处理。
+为 Hi 框架提供基础 Exception 与输入(Input) 参数过滤处理。
 
 **类 Exception 使用示例：**
 
