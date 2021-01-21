@@ -2,9 +2,24 @@
 
 namespace Hi\Helpers;
 
-use Hi\Helpers\Exceptions\ParameterException;
+use Hi\Helpers\Exceptions\ParameterCompareException;
+use Hi\Helpers\Exceptions\ParameterRequiredException;
+use Hi\Helpers\Exceptions\ParameterTypeException;
 use Hi\Helpers\Exceptions\RuntimeException;
-use Hi\Helpers\Exceptions\ValueNotExistException;
+use function is_int;
+use function is_numeric;
+use function is_bool;
+use function is_float;
+use function is_string;
+use function in_array;
+use function strpos;
+use function array_key_exists;
+use function count;
+use function func_get_args;
+use function strlen;
+use function is_date;
+use function is_datetime;
+use function is_timestamp;
 
 /**
  * 输入参数对象
@@ -23,12 +38,16 @@ class Input
 {
     /**
      * 数据容器
+     *
+     * @var array<string, mixed>
      */
     protected array $data;
 
     /**
      * constructor
      * 为 input 注入数据体
+     *
+     * @param array<string, mixed> $data
      */
     public function __construct(array $data)
     {
@@ -39,11 +58,16 @@ class Input
      * 简单数据对比
      *
      * @param mixed $value
+     * @param array<int, mixed> $rule
      */
     protected function compare(string $key, $value, array $rule): bool
     {
         if (count($rule) < 2) {
-            throw new RuntimeException("\$rules 参数错误，格式示例： ['==', 1] ", StatusCode::E_500000);
+            throw new RuntimeException(
+                "\$rules 参数错误，格式示例： ['==', 1] ",
+                StatusCode::E_500000,
+                func_get_args()
+            );
         }
 
         $expect = true;
@@ -80,7 +104,7 @@ class Input
                 throw new RuntimeException(
                     "只支持'>', '>=', '<', '<=', '==', '===', 'in' 操作",
                     StatusCode::E_500000,
-                    ['rule' => $rule]
+                    func_get_args()
                 );
         }
 
@@ -88,10 +112,10 @@ class Input
             return true;
         }
 
-        throw new ParameterException(
+        throw new ParameterCompareException(
             "key[{$key}] 参数比对失败",
             StatusCode::E_400000,
-            ['args' => func_get_args()]
+            func_get_args()
         );
     }
 
@@ -108,47 +132,58 @@ class Input
      */
     public function exist(string $key): bool
     {
-        $value = $this->get($key);
+        $value = $this->data[$key] ?? null;
 
         // 需要判断 '0', '0.0' 这类情况
         // 在 PHP 种 '0' 与 '0.0' 被认为是空，即 false
-        if (\is_string($value)) {
+        if (is_string($value)) {
             return strlen($value) ? true : false;
         }
 
-        if (\is_numeric($value)) {
+        if (is_numeric($value)) {
             return true;
         }
 
-        return ! $value;
+        if (is_bool($value)) {
+            return true;
+        }
+
+        return (bool) $value;
     }
 
     /**
      * 返回 dta 中 key 对应数据
      *
+     * @param mixed $default
      * @return mixed
      */
     public function get(string $key, bool $required = false, $default = null)
     {
-        if ($this->has($key)) {
+        if ($this->exist($key)) {
             return $this->data[$key];
         }
 
         if ($required) {
-            throw new ParameterException("参数 key[{$key}] 不能为空", StatusCode::E_400000);
+            throw new ParameterRequiredException("参数 key[{$key}] 不能为空", StatusCode::E_400000);
         }
 
-        return $default;
+        if ($this->has($key)) {
+            return $this->data[$key];
+        } else {
+            return $default;
+        }
     }
 
     /**
      * 检查并返回 key 为整型
+     *
+     * 参数只接受整型数字或者整型字符串，如：123, '234'
+     * 对于 '123.45' 这种数字字符串将被视为 int 类型
+     *
+     * @param int $default
+     * @param array<int, mixed> $rule
      */
-    public function int(
-        string $key,
-        bool $required = false,
-        $default = 0,
-        array $rule = []): int
+    public function int(string $key, bool $required = false, $default = 0, array $rule = []): int
     {
         $value = $this->get($key, $required, $default);
 
@@ -156,21 +191,26 @@ class Input
             $this->compare($key, $value, $rule);
         }
 
-        if (\is_int($value)) {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        // 处理 value 值为数字字符串情况
+        if (is_numeric($value) && strpos($value, '.') === false) {
             return (int) $value;
         }
 
-        throw new ParameterException("`{$key}` 的值必须为整型", StatusCode::E_400000);
+        throw new ParameterTypeException("`{$key}` 值必须为 int 类型", StatusCode::E_400000, $value);
     }
 
     /**
      * 检查并返回 key 为浮点类型
+     * 方法只接受处理纯浮点型或浮点型字符串
+     *
+     * @param float $default
+     * @param array<int, mixed> $rule
      */
-    public function float(
-        string $key,
-        bool $required = false,
-        $default = 0.0,
-        array $rule = []): float
+    public function float(string $key, bool $required = false, $default = 0.0, array $rule = []): float
     {
         $value = $this->get($key, $required, $default);
 
@@ -178,21 +218,24 @@ class Input
             $this->compare($key, $value, $rule);
         }
 
-        if (\is_numeric($value)) {
+        if (is_float($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value) && strpos((string) $value, '.') !== false) {
             return (float) $value;
         }
 
-        throw new ParameterException("`{$key}` 的值必须为浮点类型", StatusCode::E_400000);
+        throw new ParameterTypeException("`{$key}` 值必须为 float 类型", StatusCode::E_400000, $value);
     }
 
     /**
      * 检查并返回 key 为浮点类型
+     *
+     * @param bool $default
+     * @param array<int, mixed> $rule
      */
-    public function bool(
-        string $key,
-        bool $required = false,
-        $default = false,
-        array $rule = []): bool
+    public function bool(string $key, bool $required = false, $default = false, array $rule = []): bool
     {
         $value = $this->get($key, $required, $default);
 
@@ -200,21 +243,20 @@ class Input
             $this->compare($key, $value, $rule);
         }
 
-        if (\is_bool($value)) {
+        if (is_bool($value)) {
             return (bool) $value;
         }
 
-        throw new ParameterException("`{$key}` 的值必须为布尔类型", StatusCode::E_400000);
+        throw new ParameterTypeException("`{$key}` 值必须为 bool 类型", StatusCode::E_400000, $value);
     }
 
     /**
      * 检查并返回 key 为字符串
+     *
+     * @param string $default
+     * @param array<int, mixed> $rule
      */
-    public function string(
-        string $key,
-        bool $required = false,
-        $default = '',
-        array $rule = []): string
+    public function string(string $key, bool $required = false, $default = '', array $rule = []): string
     {
         $value = $this->get($key, $required, $default);
 
@@ -222,83 +264,84 @@ class Input
             $this->compare($key, $value, $rule);
         }
 
-        if (\is_string($value)) {
+        if (is_string($value)) {
             return (string) $value;
         }
 
-        throw new ParameterException("`{$key}` 的值必须为布尔类型", StatusCode::E_400000);
+        throw new ParameterTypeException("`{$key}` 值必须为 string 类型", StatusCode::E_400000, $value);
     }
 
     /**
      * 检查并返回 key 为字 date 类型
+     *
+     * @param string $default
+     * @param array<int, mixed> $rule
      */
-    public function date(
-        string $key,
-        bool $required = false,
-        $default = '',
-        array $rule = []): string
+    public function date(string $key, bool $required = false, $default = '', array $rule = []): string
     {
         $value = $this->string($key, $required, $default, $rule);
 
-        if (\is_date($value)) {
+        if (is_date($value)) {
             return $value;
         }
 
-        throw new ParameterException(
-            "`{$key}` 的值必须为合法 date 类型，例：2000-01-01"
+        throw new ParameterTypeException(
+            "`{$key}` 值必须为合法 date 类型，例：2000-01-01",
+            StatusCode::E_400000,
+            $value
         );
     }
 
     /**
      * 检查并返回 key 为字 datetime 类型
+     *
+     * @param string $default
+     * @param array<int, mixed> $rule
      */
-    public function datetime(
-        string $key,
-        bool $required = false,
-        $default = '',
-        array $rule = []): string
+    public function datetime(string $key, bool $required = false, $default = '', array $rule = []): string
     {
         $value = $this->string($key, $required, $default, $rule);
 
-        if (\is_datetime($value)) {
+        if (is_datetime($value)) {
             return $value;
         }
 
-        throw new ParameterException(
-            "`{$key}` 的值必须为合法 datetime 类型，例：2000-01-01 00:00:00",
-            StatusCode::E_400000
+        throw new ParameterTypeException(
+            "`{$key}` 值必须为合法 datetime 类型，例：2000-01-01 00:00:00",
+            StatusCode::E_400000,
+            $value
         );
     }
 
     /**
      * 检查并返回 key 为字 timestamp 类型
+     *
+     * @param int $default
+     * @param array<int, mixed> $rule
      */
-    public function timestamp(
-        string $key,
-        bool $required = false,
-        $default = 0,
-        array $rule = []): int
+    public function timestamp(string $key, bool $required = false, $default = 0, array $rule = []): int
     {
         $value = $this->int($key, $required, $default, $rule);
 
-        if (\is_timestamp($value)) {
+        if (is_timestamp($value)) {
             return (int) $value;
         }
 
-        throw new ParameterException(
-            "`{$key}` 的值必须为合法 timestamp 类型，例：1611150603",
-            StatusCode::E_400000
+        throw new ParameterTypeException(
+            "`{$key}` 值必须为合法 timestamp 类型，例：1611150603",
+            StatusCode::E_400000,
+            $value
         );
     }
 
     /**
      * 检查并返回 key 为字 timestamp 类型
+     *
+     * @param array<mixed> $default
+     * @param array<int, mixed> $rule
+     * @return array<mixed>
      */
-    public function array(
-        string $key,
-        bool $required = false,
-        $default = [],
-        array $rule = []): array
+    public function array(string $key, bool $required = false, $default = [], array $rule = []): array
     {
         $value = $this->get($key, $required, $default);
 
@@ -310,7 +353,7 @@ class Input
             return $value;
         }
 
-        throw new ParameterException("`{$key}` 的值必须为数组", StatusCode::E_400000);
+        throw new ParameterTypeException("`{$key}` 值必须为 array 类型", StatusCode::E_400000, $value);
     }
 
     /**
@@ -323,6 +366,8 @@ class Input
 
     /**
      * 返回 $data 数据
+     * 
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -331,8 +376,10 @@ class Input
 
     /**
      * 返回 json 格式数据
+     *
+     * @return string|false
      */
-    public function toJson(): string
+    public function toJson()
     {
         return \json_encode($this->data, JSON_UNESCAPED_UNICODE);
     }

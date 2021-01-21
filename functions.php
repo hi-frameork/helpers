@@ -22,7 +22,7 @@ if (! function_exists('is_datetime')) {
      */
     function is_datetime(string $datetime): bool
     {
-        return \date('Y-m-d', \strtotime($datetime)) === $datetime;
+        return \date('Y-m-d H:i:s', \strtotime($datetime)) === $datetime;
     }
 }
 

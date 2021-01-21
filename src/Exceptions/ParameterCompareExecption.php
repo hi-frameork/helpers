@@ -4,6 +4,6 @@ namespace Hi\Helpers\Exceptions;
 
 use Hi\Helpers\Exception;
 
-class ValueNotExistException extends Exception
+class ParameterCompareException extends Exception
 {
 }

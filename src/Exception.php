@@ -11,6 +11,7 @@ class Exception extends \Exception
 
     /**
      * constructor
+     * @param mixed $runtime
      */
     public function __construct(string $message = '', int $code = -1, $runtime = null)
     {
@@ -20,6 +21,7 @@ class Exception extends \Exception
 
     /**
      * 返回 runtime 数据
+     * @return mixed
      */
     public function getRuntime()
     {

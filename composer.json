@@ -28,5 +28,9 @@
         "psr-4": {
             "Hi\\Helpers\\Tests\\": "tests/"
         }
+    },
+    "scripts": {
+        "phpunit": "php ./vendor/bin/phpunit",
+        "phpstan": "php ./vendor/bin/phpstan analyse -l 8 ./src"
     }
 }

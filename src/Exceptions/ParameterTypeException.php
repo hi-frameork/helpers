@@ -4,7 +4,7 @@ namespace Hi\Helpers\Exceptions;
 
 use Hi\Helpers\Exception;
 
-class ParameterException extends Exception
+class ParameterTypeException extends Exception
 {
 }
 
