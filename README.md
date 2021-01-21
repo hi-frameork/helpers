@@ -2,7 +2,7 @@
 
 为 Hi 框架提供基础 Exception 与 输入(Input) 参数过滤处理。
 
-**Exception 示例：**
+**类 Exception 使用示例：**
 
 通过 `getRuntime` 方法，触发异常时传入地参数可以被框架在运行时进行收集，用于快速 debug。
 ```php
@@ -12,8 +12,7 @@ $e->getCode();
 $e->getRuntime();
 ```
 
-
-**Input 示例：**
+**类 Input 使用示例：**
 
 ```php
 $input = new \Hi\Input([
