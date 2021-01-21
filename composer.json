@@ -3,6 +3,10 @@
     "description": "Hi 框架 Helper 组件",
     "type": "library",
     "license": "MIT",
+    "keywords": [
+        "hi",
+        "hi-framework"
+    ],
     "authors": [
         {
             "name": "热心网友",
