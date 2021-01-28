@@ -124,14 +124,10 @@ class Input
      */
     public function has(string $key): bool
     {
-        return array_key_exists($key, $this->data);
-    }
+        if (! $this->exist($key)) {
+            return false;
+        }
 
-    /**
-     * 返回指定 key 是否存在数据
-     */
-    public function exist(string $key): bool
-    {
         $value = $this->data[$key] ?? null;
 
         // 需要判断 '0', '0.0' 这类情况
@@ -152,6 +148,14 @@ class Input
     }
 
     /**
+     * 返回指定 key 是否存在数据
+     */
+    public function exist(string $key): bool
+    {
+        return array_key_exists($key, $this->data);
+    }
+
+    /**
      * 返回 dta 中 key 对应数据
      *
      * @param mixed $default
@@ -159,7 +163,7 @@ class Input
      */
     public function get(string $key, bool $required = false, $default = null)
     {
-        if ($this->exist($key)) {
+        if ($this->has($key)) {
             return $this->data[$key];
         }
 
@@ -167,7 +171,7 @@ class Input
             throw new ParameterRequiredException("参数 key[{$key}] 不能为空", StatusCode::E_400000);
         }
 
-        if ($this->has($key)) {
+        if ($this->exist($key)) {
             return $this->data[$key];
         } else {
             return $default;
