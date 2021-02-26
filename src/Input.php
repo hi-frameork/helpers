@@ -200,6 +200,7 @@ class Input
         }
 
         // 处理 value 值为数字字符串情况
+        /** @var string $value */
         if (is_numeric($value) && strpos($value, '.') === false) {
             return (int) $value;
         }

@@ -1,6 +1,4 @@
-<?php
-
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace Hi\Helpers;
 
@@ -9,6 +7,12 @@ use function settype;
 
 class Arr
 {
+    /**
+     * @param array<mixed> $data
+     * @param string|int $key
+     * @param mixed $defaultValue
+     * @return mixed
+     */
     final public static function get(
         array $data,
         $key,
