@@ -41,3 +41,15 @@ if (! function_exists('is_timestamp')) {
         return true;
     }
 }
+
+if (! function_exists('input')) {
+    /**
+     * 创建 input 实例
+     *
+     * @return \Hi\Helpers\Input
+     */
+    function input(array $data)
+    {
+        return new \Hi\Helpers\Input($data);
+    }
+}
