@@ -41,7 +41,7 @@ class Input
      *
      * @var array<string, mixed>
      */
-    protected array $data;
+    protected $data;
 
     /**
      * constructor
