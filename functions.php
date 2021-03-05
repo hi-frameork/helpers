@@ -1,5 +1,7 @@
 <?php
 
+use Hi\Helpers\Json;
+
 if (! function_exists('is_date')) {
     /**
      * 校验参数是否为合法date字符串
@@ -39,5 +41,29 @@ if (! function_exists('is_timestamp')) {
         }
 
         return true;
+    }
+}
+
+if (! function_exists('input')) {
+    /**
+     * 创建 input 实例
+     *
+     * @return \Hi\Helpers\Input
+     */
+    function input(array $data)
+    {
+        return new \Hi\Helpers\Input($data);
+    }
+}
+
+if (! function_exists('objectToArray')) {
+    /**
+     * 将对象转换为数组
+     *
+     * @return array|false
+     */
+    function objectToArray($object)
+    {
+        return Json::decode(Json::encode($object), true);
     }
 }
